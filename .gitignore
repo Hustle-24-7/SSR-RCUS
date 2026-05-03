@@ -1,0 +1,13 @@
+# 数据集
+data/
+
+# 模型结果
+saved_models/
+
+# Python 缓存目录
+**/__pycache__/
+
+# Python 编译缓存文件
+*.pyc
+*.pyo
+*.pyd
