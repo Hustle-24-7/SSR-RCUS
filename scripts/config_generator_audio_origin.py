@@ -57,14 +57,13 @@ def get_algorithm_specific_config(algorithm):
         alg_cfg["ulb_loss_ratio"] = 0.1
         alg_cfg["unsup_warm_up"] = 0.4
         alg_cfg["mixup_alpha"] = 0.5
-        alg_cfg["mixup_manifold"] = True
     elif algorithm == "ucvme":
         alg_cfg["uratio"] = 1
         alg_cfg["ulb_loss_ratio"] = 0.05
         alg_cfg["dropout_rate"] = 0.05
         alg_cfg["num_ensemble"] = 5
     elif algorithm == "clss":
-        alg_cfg["uratio"] = 0.25
+        alg_cfg["uratio"] = 1
         alg_cfg["lb_ctr_loss_ratio"] = 1.0
         alg_cfg["ulb_ctr_loss_ratio"] = 0.05
         alg_cfg["ulb_rank_loss_ratio"] = 0.01
@@ -91,27 +90,17 @@ def get_algorithm_specific_config(algorithm):
         alg_cfg["hard_label"] = True
         alg_cfg["T"] = 0.5
         alg_cfg["p_cutoff"] = 0.95
-    # elif algorithm == "rankup":
-    #     alg_cfg["uratio"] = 1
-    #     alg_cfg["arc_loss_ratio"] = 0.05
-    #     alg_cfg["arc_ulb_loss_ratio"] = 20.0
-    #     alg_cfg["hard_label"] = True
-    #     alg_cfg["T"] = 0.5
-    #     alg_cfg["p_cutoff"] = 0.95
-    #     alg_cfg["alpha"] = 0.5
-    #     alg_cfg["sch"] = "lambda"
-
 
     return alg_cfg
 
 
-def create_usb_nlp_config(alg, seed, dataset, net, num_labels, port, lr, weight_decay, layer_decay, max_length, warmup_epoch=5, amp=False):
+def create_usb_audio_config(alg, seed, dataset, net, num_labels, port, lr, weight_decay, layer_decay, max_length_seconds, sample_rate):
     cfg = {}
 
     cfg["algorithm"] = alg
 
     # save config
-    cfg["save_dir"] = "./saved_models/nlp"
+    cfg["save_dir"] = "./saved_models/audio"
     cfg["save_name"] = None
     cfg["resume"] = True
     cfg["load_path"] = None
@@ -125,10 +114,10 @@ def create_usb_nlp_config(alg, seed, dataset, net, num_labels, port, lr, weight_
     cfg["num_train_iter"] = 102400
     cfg["num_eval_iter"] = 1024
     cfg["num_log_iter"] = 256
-    cfg["num_warmup_iter"] = int(1024 * warmup_epoch)
+    cfg["num_warmup_iter"] = int(1024 * 5)
     cfg["num_labels"] = num_labels
     cfg["batch_size"] = 8
-    cfg["eval_batch_size"] = 8
+    cfg["eval_batch_size"] = 16
     cfg["ema_m"] = 0.0
 
     alg_cfg = get_algorithm_specific_config(alg)
@@ -140,7 +129,7 @@ def create_usb_nlp_config(alg, seed, dataset, net, num_labels, port, lr, weight_
     cfg["momentum"] = 0.9
     cfg["weight_decay"] = weight_decay
     cfg["layer_decay"] = layer_decay
-    cfg["amp"] = amp
+    cfg["amp"] = False
     cfg["clip_grad"] = 0.0
     cfg["use_cat"] = False
     cfg["criterion"] = "l1"
@@ -149,15 +138,16 @@ def create_usb_nlp_config(alg, seed, dataset, net, num_labels, port, lr, weight_
     cfg["net"] = net
     cfg["net_from_name"] = False
     cfg["use_pretrain"] = True
-    cfg["pretrain_path"] = "google/bert_uncased_L-4_H-512_A-8"
+    cfg["pretrain_path"] = "openai/whisper-base"
 
     # data config
     cfg["data_dir"] = "./data"
     cfg["dataset"] = dataset
     cfg["train_sampler"] = "RandomSampler"
-    cfg["num_workers"] = 4
-    cfg["max_length"] = max_length
-    # cfg["preload"] = False
+    cfg["num_workers"] = 8
+    cfg["max_length_seconds"] = max_length_seconds
+    cfg["sample_rate"] = sample_rate
+    cfg["preload"] = True
 
     # seed & distributed config
     cfg["seed"] = seed
@@ -170,27 +160,28 @@ def create_usb_nlp_config(alg, seed, dataset, net, num_labels, port, lr, weight_
     return cfg
 
 
-def exp_usb_speech(dataset="yelp_review", label_amount=250, seed=0, port=10001):
-    configs_dir = r"../config/nlp/"
-    saved_dir = r"../saved_models/nlp"
+def exp_usb_speech(dataset="bvcc", label_amount=250, seed=0, port=10001):
+    configs_dir = r"../config/audio/"
+    saved_dir = r"../saved_models/audio"
 
     os.makedirs(configs_dir, exist_ok=True)
     os.makedirs(saved_dir, exist_ok=True)
 
     algs = ["supervised", "fullysupervised", "pimodel", "meanteacher", "ucvme", "clss", "mixmatch", "rankup", "rankuprda"]
 
-    net = "bert_base"
-    weight_decay = 5e-4
-    max_length = 512
+    weight_decay = 2e-5
+    sampling_rate = 16000
 
     for alg in algs:
         # change the configuration of each dataset
-        if dataset == "yelp_review":
-            lr = 1e-5
+        if dataset == "bvcc":
+            max_length_seconds = 6.0
+            net = "whisper_base"
+            lr = 2e-6
             layer_decay = 0.75
 
         # prepare the configuration file
-        cfg = create_usb_nlp_config(
+        cfg = create_usb_audio_config(
             alg,
             seed,
             dataset,
@@ -200,14 +191,15 @@ def exp_usb_speech(dataset="yelp_review", label_amount=250, seed=0, port=10001):
             lr,
             weight_decay,
             layer_decay,
-            max_length,
+            max_length_seconds,
+            sampling_rate,
         )
         create_configuration(cfg, configs_dir)
 
 
 if __name__ == "__main__":
     label_amount = {
-        "yelp_review": [10, 50, 250, 2000],
+        "bvcc": [10,50,250,2000],
     }
     seeds = [0,1,2]
 

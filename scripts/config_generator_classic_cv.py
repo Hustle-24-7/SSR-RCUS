@@ -92,8 +92,8 @@ def get_algorithm_specific_config(algorithm, num_labels):
         alg_cfg["p_cutoff"] = 0.95
     elif algorithm == "rcus":
         alg_cfg["uratio"] = 7
-        alg_cfg["arc_loss_ratio"] = 0.2
-        alg_cfg["arc_ulb_loss_ratio"] = 5.0
+        alg_cfg["arc_lb_loss_ratio"] = 0.2
+        alg_cfg["arc_ulb_loss_ratio"] = 1.0
         alg_cfg["hard_label"] = True
         alg_cfg["T"] = 0.5
         alg_cfg["p_cutoff"] = 0.95
@@ -102,8 +102,8 @@ def get_algorithm_specific_config(algorithm, num_labels):
         alg_cfg["gamma"] = 0.5
         alg_cfg["milestones"] = [10240, 102400]
         if num_labels > 100:
-            alg_cfg["arc_loss_ratio"] = 0.1
-            alg_cfg["arc_ulb_loss_ratio"] = 10.0
+            alg_cfg["arc_lb_loss_ratio"] = 0.1
+            # alg_cfg["arc_ulb_loss_ratio"] = 1.0
 
 
     return alg_cfg
@@ -175,13 +175,13 @@ def create_classic_config(alg, seed, dataset, net, num_labels, img_size, port, w
 
 
 def exp_classic_cv(dataset="utkface", label_amount=250, seed=0, port=10001):
-    configs_dir = r"./config/classic_cv/"
-    saved_dir = r"./saved_models/classic_cv"
+    configs_dir = r"../config/classic_cv/"
+    saved_dir = r"../saved_models/classic_cv"
 
     os.makedirs(configs_dir, exist_ok=True)
     os.makedirs(saved_dir, exist_ok=True)
 
-    algs = ["supervised", "fullysupervised", "pimodel", "meanteacher", "ucvme", "clss", "mixmatch", "rankup", "rda", "rankuprda"]
+    algs = ["supervised", "fullysupervised", "pimodel", "meanteacher", "ucvme", "clss", "mixmatch", "rankup", "rankuprda", "rcus"]
 
     for alg in algs:
         # change the configuration of each dataset
@@ -210,9 +210,9 @@ def exp_classic_cv(dataset="utkface", label_amount=250, seed=0, port=10001):
 
 if __name__ == "__main__":
     label_amount = {
-        "utkface": [50, 250, 2000],
+        "utkface": [10, 50, 250, 2000],
     }
-    seeds = [0]
+    seeds = [0,1,2]
 
     for dataset, label_amount_list in label_amount.items():
         dist_port = list(range(10001, 10001 + len(label_amount_list) * len(seeds)))
