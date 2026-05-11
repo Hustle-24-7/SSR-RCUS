@@ -4,6 +4,9 @@ data/
 # 模型结果
 saved_models/
 
+# 输出日志
+outputs_log/
+
 # Python 缓存目录
 **/__pycache__/
 

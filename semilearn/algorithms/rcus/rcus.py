@@ -30,7 +30,7 @@ class RCUS(AlgorithmBase):
             logger to use
         - arc_ulb_loss_ratio (`float`):
             Weight for unsupervised loss in Arc
-        - arc_loss_ratio (`float`):
+        - arc_lb_loss_ratio (`float`):
             Weight for Arc loss
         - T (`float`):
             Temperature for pseudo-label sharpening
@@ -158,15 +158,15 @@ class RCUS(AlgorithmBase):
             }
 
             sup_loss = self.reg_loss(logits_x_lb, y_lb, reduction="mean")
-            unsup_loss = self.reg_loss(outs_x_ulb_s["logits"], outs_x_ulb_w["logits"], reduction="mean")
-            arc_sup_loss = self.ce_loss(logits_arc_x_lb, arc_y_lb, reduction="mean")
-            arc_unsup_loss = self.cls_consistency_loss(
-                logits_arc_x_ulb_s, arc_pseudo_label, "ce", mask=mask
-            )
+            # unsup_loss = self.reg_loss(outs_x_ulb_s["logits"], outs_x_ulb_w["logits"], reduction="mean")
+            # arc_sup_loss = self.ce_loss(logits_arc_x_lb, arc_y_lb, reduction="mean")
+            # arc_unsup_loss = self.cls_consistency_loss(
+            #     logits_arc_x_ulb_s, arc_pseudo_label, "ce", mask=mask
+            # )
 
             # arc_loss = self.arc_lb_loss_ratio * arc_sup_loss + self.arc_ulb_loss_ratio * arc_unsup_loss
 
-            reg_loss = sup_loss + self.ulb_loss_ratio  # * unsup_loss
+            reg_loss = sup_loss # + self.ulb_loss_ratio  * unsup_loss
 
             logits_mixup_x_lb1, logits_mixup_x_lb2 = self.arc_manifold_mixup(feats_x_lb, logits_arc_x_lb_)
             arc_mixup_sup_loss = self.ce_loss(
@@ -186,7 +186,7 @@ class RCUS(AlgorithmBase):
         out_dict = self.process_out_dict(loss=total_loss, feat=feat_dict)
         log_dict = self.process_log_dict(
             sup_loss=(sup_loss + arc_mixup_sup_loss).item(),
-            unsup_loss=arc_unsup_loss.item(),
+            unsup_loss=arc_mixup_unsup_loss.item(),
             total_loss=total_loss.item(),
         )
         return out_dict, log_dict
@@ -202,6 +202,7 @@ class RCUS(AlgorithmBase):
         # logits_mixup_x2 = (logits_arc_mixup_x.transpose(0, 1) - logits_arc_x.unsqueeze(dim=1)).flatten(start_dim=0, end_dim=1)
 
         logits_mixup_x1 = (logits_arc_x.unsqueeze(dim=1) - logits_arc_mixup_x.transpose(0, 1)).transpose(0, 1).flatten(start_dim=0, end_dim=1)
+        # logits_mixup_x1 = (logits_arc_x.unsqueeze(0) - logits_arc_mixup_x).flatten(start_dim=0, end_dim=1)
         logits_mixup_x2 = (logits_arc_mixup_x - logits_arc_x.unsqueeze(dim=1)).flatten(start_dim=0, end_dim=1)
 
         return logits_mixup_x1, logits_mixup_x2

@@ -176,10 +176,10 @@ if __name__ == "__main__":
     gmae = gmean(np.abs(y_true - y_pred))
 
     # Print results
-    print(f"MAE : {mae:.5f}")
-    print(f"MSE : {mse:.5f}")
     print(f"R2  : {r2:.5f}")
-    print(f"LCC : {lcc:.5f}")
+    print(f"MAE : {mae:.5f}")
     print(f"SRCC: {srcc:.5f}")
+    print(f"MSE : {mse:.5f}")
+    print(f"LCC : {lcc:.5f}")
     print(f"KTAU: {ktau:.5f}")
     print(f"GMAE: {gmae:.5f}")

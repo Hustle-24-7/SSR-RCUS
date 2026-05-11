@@ -61,7 +61,7 @@ def _handle_errors(errors):
 
 ALL_MODULES = [
     # NOTE: add all algorithms here
-    ("semilearn.algorithms", ["fullysupervised", "meanteacher", "mixmatch", "pimodel", "ucvme", "clss", "rankup", "rda", "rankuprda", "rcus", "rcusrda"])
+    ("semilearn.algorithms", ["fullysupervised", "meanteacher", "mixmatch", "pimodel", "ucvme", "clss", "rankup", "rda", "rankuprda", "rcus"])
 ]
 
 
